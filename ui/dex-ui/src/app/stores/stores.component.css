@@ -1,0 +1,57 @@
+.filters {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filters .checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.stores-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.stores-table th,
+.stores-table td {
+  border: 1px solid var(--border);
+  padding: 8px;
+  text-align: left;
+}
+
+.stores-table th {
+  background: var(--surface-soft);
+}
+
+.error {
+  color: var(--danger);
+}
+
+.loading {
+  color: var(--muted);
+}
+
+.pager {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+

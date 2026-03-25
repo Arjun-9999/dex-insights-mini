@@ -1,0 +1,16 @@
+<h2>Store Details</h2>
+
+<p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
+
+<div *ngIf="!errorMessage && !store">Loading...</div>
+
+<div *ngIf="store" class="detail-grid">
+  <div><strong>Store ID:</strong> {{ store.STOREID }}</div>
+  <div><strong>Brand:</strong> {{ store.BRAND }}</div>
+  <div><strong>Status:</strong> {{ store.status ?? store.STATUS }}</div>
+  <div><strong>Offline Pumps:</strong> {{ store.offlinePumps ?? store.OFFLINE_PUMPS }}</div>
+  <div><strong>City:</strong> {{ store.storeAddress?.city }}</div>
+  <div><strong>State:</strong> {{ store.storeAddress?.state }}</div>
+</div>
+
+<p><a routerLink="/stores">Back to stores</a></p>

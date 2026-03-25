@@ -1,0 +1,56 @@
+<h2>Stores</h2>
+
+<section class="filters">
+  <label>
+    Brand
+    <input [(ngModel)]="brandFilter" placeholder="e.g. Shell" />
+  </label>
+
+  <label>
+    Status
+    <input [(ngModel)]="statusFilter" placeholder="e.g. ONLINE" />
+  </label>
+
+  <label class="checkbox">
+    <input type="checkbox" [(ngModel)]="sortByOfflinePumps" />
+    Sort by offline pumps
+  </label>
+
+  <button (click)="applyFilters()" [disabled]="loading">Apply</button>
+  <button (click)="resetFilters()" [disabled]="loading">Reset</button>
+</section>
+
+<p *ngIf="loading" class="loading">Loading stores...</p>
+<p *ngIf="errorMessage" class="error">⚠️ {{ errorMessage }}</p>
+
+<table *ngIf="stores.length > 0" class="stores-table">
+  <thead>
+    <tr>
+      <th>Store ID</th>
+      <th>Brand</th>
+      <th>Status</th>
+      <th>Offline Pumps</th>
+      <th>City</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let store of stores">
+      <td>{{ store.STOREID }}</td>
+      <td>{{ store.BRAND }}</td>
+      <td>{{ store.status ?? store.STATUS }}</td>
+      <td>{{ store.offlinePumps ?? store.OFFLINE_PUMPS }}</td>
+      <td>{{ store.storeAddress?.city }}</td>
+      <td><a [routerLink]="['/stores', store.STOREID ?? store.storeId]">View</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<p *ngIf="!errorMessage && stores.length === 0">No stores found.</p>
+
+<section class="pager">
+  <button (click)="prevPage()" [disabled]="page === 0">Previous</button>
+  <span>Page {{ page + 1 }}</span>
+  <button (click)="nextPage()" [disabled]="stores.length < size">Next</button>
+  <span *ngIf="totalElements > 0">Total {{ totalElements }}</span>
+</section>

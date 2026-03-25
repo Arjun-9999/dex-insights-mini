@@ -1,0 +1,12 @@
+<h2>Insights Overview</h2>
+
+<p *ngIf="loading" class="loading">Loading insights...</p>
+<p *ngIf="errorMessage" class="error">⚠️ {{ errorMessage }}</p>
+<p *ngIf="!loading && !errorMessage && !overview">No insights data available.</p>
+
+<div *ngIf="overview" class="insights-grid">
+  <div class="card" *ngFor="let item of overview | keyvalue">
+	<h3>{{ item.key }}</h3>
+	<pre>{{ item.value | json }}</pre>
+  </div>
+</div>

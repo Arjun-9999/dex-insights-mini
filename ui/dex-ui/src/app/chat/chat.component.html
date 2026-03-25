@@ -1,0 +1,49 @@
+<h2>Chat</h2>
+
+<div class="chat-controls">
+  <label>
+    Store Context
+    <select [(ngModel)]="selectedStoreId" [disabled]="loadingStores">
+      <option value="">{{ loadingStores ? 'Loading stores...' : 'No store selected' }}</option>
+      <option *ngFor="let store of stores" [value]="store.STOREID">
+        {{ store.STOREID }} - {{ store.BRAND }}
+      </option>
+    </select>
+  </label>
+
+  <label>
+    Question
+    <input [(ngModel)]="question" placeholder="Ask a question" [disabled]="loading || loadingStores" />
+  </label>
+
+  <button (click)="ask()" [disabled]="loading || loadingStores || !selectedStoreId">
+    {{ loading ? 'Asking...' : 'Ask' }}
+  </button>
+</div>
+
+<p *ngIf="errorMessage" class="error">⚠️ {{ errorMessage }}</p>
+
+<div *ngIf="response">
+  <h3>Answer</h3>
+  <p>{{ response.answer }}</p>
+
+  <h4 *ngIf="response.retrievedContextSummary">Retrieved Context</h4>
+  <p *ngIf="response.retrievedContextSummary">{{ response.retrievedContextSummary }}</p>
+
+  <h4>Citations</h4>
+  <ul *ngIf="response.citations?.length; else noCitations">
+    <li *ngFor="let citation of response.citations">
+      <span *ngIf="citation.type === 'store'">
+        Store:
+        <a *ngIf="getCitationStoreId(citation)" [routerLink]="['/stores', getCitationStoreId(citation)]">
+          {{ getCitationStoreId(citation) }}
+        </a>
+        <span *ngIf="!getCitationStoreId(citation)">Unavailable</span>
+      </span>
+      <span *ngIf="citation.type !== 'store'">{{ citation | json }}</span>
+    </li>
+  </ul>
+  <ng-template #noCitations>
+    <p>No citations returned.</p>
+  </ng-template>
+</div>
