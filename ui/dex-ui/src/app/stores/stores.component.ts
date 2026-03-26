@@ -21,12 +21,33 @@ export class StoresComponent implements OnInit {
   totalElements = 0;
   errorMessage = '';
   loading = false;
+  private latestRequestId = 0;
 
   constructor(private http: HttpClient) {}
 
   ngOnInit() {
     console.log('StoresComponent initialized');
     this.loadStores();
+  }
+
+  private normalizeText(value: unknown): string {
+    return typeof value === 'string' ? value.trim().toLowerCase() : '';
+  }
+
+  private getStoreValue(store: any, camelCaseKey: string, legacyKey: string): string {
+    return store?.[camelCaseKey] ?? store?.[legacyKey] ?? '';
+  }
+
+  private matchesFilters(store: any): boolean {
+    const selectedBrand = this.normalizeText(this.brandFilter);
+    const selectedStatus = this.normalizeText(this.statusFilter);
+
+    const storeBrand = this.normalizeText(this.getStoreValue(store, 'brand', 'BRAND'));
+    const storeStatus = this.normalizeText(this.getStoreValue(store, 'status', 'STATUS'));
+
+    const brandMatches = !selectedBrand || storeBrand === selectedBrand;
+    const statusMatches = !selectedStatus || storeStatus === selectedStatus;
+    return brandMatches && statusMatches;
   }
 
   private buildQuery(): string {
@@ -47,6 +68,7 @@ export class StoresComponent implements OnInit {
   }
 
   loadStores() {
+    const requestId = ++this.latestRequestId;
     this.errorMessage = '';
     this.loading = true;
     const url = `/v1/stores?${this.buildQuery()}`;
@@ -54,12 +76,29 @@ export class StoresComponent implements OnInit {
 
     this.http.get<any>(url).subscribe({
       next: (data) => {
+        if (requestId !== this.latestRequestId) {
+          return;
+        }
         console.log('Stores loaded successfully:', data);
-        this.stores = data?.content ?? [];
-        this.totalElements = data?.totalElements ?? 0;
+
+        const responseStores = Array.isArray(data) ? data : (data?.content ?? []);
+        const filteredStores = responseStores.filter((store: any) => this.matchesFilters(store));
+
+        // Guard against stale/unfiltered backend payloads so Apply always reflects selected filters.
+        if (filteredStores.length !== responseStores.length) {
+          console.warn('Applied client-side filter guard due to mismatched backend payload.');
+        }
+
+        this.stores = filteredStores;
+        this.totalElements = Array.isArray(data)
+          ? filteredStores.length
+          : (data?.totalElements ?? filteredStores.length);
         this.loading = false;
       },
       error: (error) => {
+        if (requestId !== this.latestRequestId) {
+          return;
+        }
         console.error('Error loading stores:', error);
         this.stores = [];
         this.totalElements = 0;

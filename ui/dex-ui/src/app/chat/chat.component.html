@@ -2,11 +2,11 @@
 
 <div class="chat-controls">
   <label>
-    Store Context
-    <select [(ngModel)]="selectedStoreId" [disabled]="loadingStores">
+    Store Context (optional)
+    <select [(ngModel)]="selectedStoreId" (ngModelChange)="onStoreContextChange($event)" [disabled]="loadingStores">
       <option value="">{{ loadingStores ? 'Loading stores...' : 'No store selected' }}</option>
-      <option *ngFor="let store of stores" [value]="store.STOREID">
-        {{ store.STOREID }} - {{ store.BRAND }}
+      <option *ngFor="let store of stores" [value]="store.storeId ?? store.STOREID">
+        {{ store.storeId ?? store.STOREID }} - {{ store.brand ?? store.BRAND }}
       </option>
     </select>
   </label>
@@ -16,7 +16,7 @@
     <input [(ngModel)]="question" placeholder="Ask a question" [disabled]="loading || loadingStores" />
   </label>
 
-  <button (click)="ask()" [disabled]="loading || loadingStores || !selectedStoreId">
+  <button (click)="ask()" [disabled]="loading || loadingStores">
     {{ loading ? 'Asking...' : 'Ask' }}
   </button>
 </div>
@@ -31,16 +31,65 @@
   <p *ngIf="response.retrievedContextSummary">{{ response.retrievedContextSummary }}</p>
 
   <h4>Citations</h4>
-  <ul *ngIf="response.citations?.length; else noCitations">
-    <li *ngFor="let citation of response.citations">
-      <span *ngIf="citation.type === 'store'">
-        Store:
-        <a *ngIf="getCitationStoreId(citation)" [routerLink]="['/stores', getCitationStoreId(citation)]">
-          {{ getCitationStoreId(citation) }}
-        </a>
-        <span *ngIf="!getCitationStoreId(citation)">Unavailable</span>
-      </span>
-      <span *ngIf="citation.type !== 'store'">{{ citation | json }}</span>
+  <ul class="citations-list" *ngIf="response.citations?.length; else noCitations">
+    <li *ngFor="let citation of response.citations" class="citation-item">
+
+      <!-- Store citation -->
+      <ng-container *ngIf="citation.type === 'store'">
+        <span class="citation-badge citation-store">🏪 Store</span>
+        <a *ngIf="getCitationStoreId(citation)" [routerLink]="['/stores', getCitationStoreId(citation)]"
+           class="citation-link">{{ getCitationStoreId(citation) }}</a>
+        <span *ngIf="citation.brand"> · {{ citation.brand }}</span>
+        <span *ngIf="citation.status" class="badge"
+              [ngClass]="{'badge-online': citation.status === 'ONLINE', 'badge-offline': citation.status === 'OFFLINE'}">
+          {{ citation.status }}
+        </span>
+        <span *ngIf="citation.location"> · {{ citation.location }}</span>
+        <span *ngIf="citation.offlinePumps !== undefined"> · Pumps: {{ citation.activePumps }} active / {{ citation.offlinePumps }} offline</span>
+        <span *ngIf="citation.hyperCare === 'Yes'" class="badge badge-hyper"> HyperCare</span>
+      </ng-container>
+
+      <!-- Transaction citation -->
+      <ng-container *ngIf="citation.type === 'transaction'">
+        <span class="citation-badge citation-transaction">💳 Transaction</span>
+        <span class="citation-id">{{ citation.transactionId }}</span>
+        <span *ngIf="citation.amount"> · {{ citation.amount }}</span>
+        <span *ngIf="citation.gradeName"> · {{ citation.gradeName }}</span>
+        <span *ngIf="citation.volume"> · {{ citation.volume }}</span>
+        <span *ngIf="citation.dispenserId"> · Pump #{{ citation.dispenserId }}</span>
+        <span *ngIf="citation.timestamp" class="citation-ts"> · {{ citation.timestamp | date:'short' }}</span>
+      </ng-container>
+
+      <!-- Incident citation -->
+      <ng-container *ngIf="citation.type === 'incident'">
+        <span class="citation-badge citation-incident">⚠️ Incident</span>
+        <span class="citation-id">{{ citation.incidentId }}</span>
+        <span *ngIf="citation.severity" class="citation-severity sev-{{citation.severity | lowercase}}">
+          {{ citation.severity }}
+        </span>
+        <span *ngIf="citation.category"> · {{ citation.category }}</span>
+        <span *ngIf="citation.description" class="citation-desc"> – {{ citation.description }}</span>
+        <span *ngIf="citation.status" class="citation-status"> [{{ citation.status }}]</span>
+        <span *ngIf="citation.timestamp" class="citation-ts"> · {{ citation.timestamp | date:'short' }}</span>
+      </ng-container>
+
+      <!-- Tank citation -->
+      <ng-container *ngIf="citation.type === 'tank'">
+        <span class="citation-badge citation-tank">⛽ Tank</span>
+        <span *ngIf="citation.gradeName"><strong>{{ citation.gradeName }}</strong></span>
+        <span *ngIf="citation.levelGallons"> · Level: {{ citation.levelGallons }} gal</span>
+        <span *ngIf="citation.capacityGallons"> / {{ citation.capacityGallons }} gal capacity</span>
+        <span *ngIf="citation.ullageGallons"> · Ullage: {{ citation.ullageGallons }} gal</span>
+        <span *ngIf="citation.lastUpdatedTime" class="citation-ts"> · {{ citation.lastUpdatedTime | date:'short' }}</span>
+      </ng-container>
+
+      <!-- Aggregate citation -->
+      <ng-container *ngIf="citation.type === 'aggregate'">
+        <span class="citation-badge citation-aggregate">📊 Aggregate</span>
+        <span *ngIf="citation.scope">Scope: {{ citation.scope }}</span>
+        <span *ngIf="citation.window"> · Window: {{ citation.window }}</span>
+      </ng-container>
+
     </li>
   </ul>
   <ng-template #noCitations>

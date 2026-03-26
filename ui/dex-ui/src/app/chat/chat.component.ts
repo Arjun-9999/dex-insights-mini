@@ -13,7 +13,7 @@ import { RouterModule } from '@angular/router';
 })
 export class ChatComponent implements OnInit {
   question = '';
-  response: any;
+  response: any = null;
   stores: any[] = [];
   selectedStoreId = '';
   loading = false;
@@ -36,7 +36,7 @@ export class ChatComponent implements OnInit {
         console.log('Stores for chat loaded successfully:', data);
         this.stores = data?.content ?? [];
         if (!this.selectedStoreId && this.stores.length > 0) {
-          this.selectedStoreId = this.stores[0].STOREID;
+          this.selectedStoreId = this.stores[0].storeId ?? this.stores[0].STOREID;
         }
         this.loadingStores = false;
       },
@@ -48,14 +48,16 @@ export class ChatComponent implements OnInit {
     });
   }
 
+  onStoreContextChange(storeId: string) {
+    this.selectedStoreId = storeId ?? '';
+    // Clear previous answer/citations so UI reflects the newly selected store context.
+    this.response = null;
+    this.errorMessage = '';
+  }
+
   ask() {
     if (!this.question.trim()) {
       this.errorMessage = 'Please enter a question.';
-      return;
-    }
-
-    if (!this.selectedStoreId) {
-      this.errorMessage = 'Please select a store.';
       return;
     }
 
@@ -64,9 +66,12 @@ export class ChatComponent implements OnInit {
     console.log('Sending chat question to store:', this.selectedStoreId);
 
     const payload: Record<string, string> = {
-      question: this.question.trim(),
-      storeId: this.selectedStoreId
+      question: this.question.trim()
     };
+
+    if (this.selectedStoreId) {
+      payload['storeId'] = this.selectedStoreId;
+    }
 
     this.http.post('/v1/chat', payload).subscribe({
       next: (data) => {

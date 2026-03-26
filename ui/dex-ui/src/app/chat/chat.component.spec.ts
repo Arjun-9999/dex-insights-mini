@@ -54,5 +54,50 @@ describe('ChatComponent', () => {
     req.flush({ answer: 'ok', citations: [] });
     expect(component.response.answer).toBe('ok');
   });
+
+  it('posts question without storeId when no store context is selected', () => {
+    const fixture = TestBed.createComponent(ChatComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    httpMock.expectOne('/v1/stores?page=0&size=100').flush({ content: [{ STOREID: 'S002', BRAND: 'BP' }] });
+
+    component.selectedStoreId = '';
+    component.question = 'Give me overall platform summary';
+    component.ask();
+
+    const req = httpMock.expectOne('/v1/chat');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      question: 'Give me overall platform summary'
+    });
+
+    req.flush({ answer: 'summary', citations: [] });
+    expect(component.response.answer).toBe('summary');
+  });
+
+  it('clears previous response when store context changes', () => {
+    const fixture = TestBed.createComponent(ChatComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    httpMock.expectOne('/v1/stores?page=0&size=100').flush({
+      content: [
+        { STOREID: '10001', BRAND: '7-Eleven' },
+        { STOREID: '10002', BRAND: 'Shell' }
+      ]
+    });
+
+    component.response = {
+      answer: "Sorry, I didn't understand that question for Store 10001 (7-Eleven).",
+      citations: [{ type: 'store', storeId: '10001' }]
+    };
+
+    component.onStoreContextChange('10002');
+
+    expect(component.selectedStoreId).toBe('10002');
+    expect(component.response).toBeNull();
+    expect(component.errorMessage).toBe('');
+  });
 });
 

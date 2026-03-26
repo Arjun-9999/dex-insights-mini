@@ -26,12 +26,23 @@ public class StoreService {
     public Page<Store> getStores(String brand, String status, boolean sortByOfflinePumps, Pageable pageable) {
         log.info("event=load_stores brand={} status={} sortByOfflinePumps={} page={} size={}",
                 brand, status, sortByOfflinePumps, pageable.getPageNumber(), pageable.getPageSize());
+
+        String brandFilter = brand == null ? null : brand.trim();
+        String statusFilter = status == null ? null : status.trim();
+
         Stream<Store> stream = stores.stream();
-        if (brand != null) stream = stream.filter(s -> s.getBrand().equalsIgnoreCase(brand));
-        if (status != null) stream = stream.filter(s -> s.getStatus().equalsIgnoreCase(status));
+        if (brandFilter != null && !brandFilter.isBlank()) {
+            stream = stream.filter(s -> s.getBrand() != null && s.getBrand().equalsIgnoreCase(brandFilter));
+        }
+        if (statusFilter != null && !statusFilter.isBlank()) {
+            stream = stream.filter(s -> s.getStatus() != null && s.getStatus().equalsIgnoreCase(statusFilter));
+        }
         if (sortByOfflinePumps) stream = stream.sorted(Comparator.comparingInt(Store::getOfflinePumps).reversed());
         List<Store> filtered = stream.toList();
         int start = (int) pageable.getOffset();
+        if (start >= filtered.size()) {
+            return new PageImpl<>(List.of(), pageable, filtered.size());
+        }
         int end = Math.min(start + pageable.getPageSize(), filtered.size());
         List<Store> pageContent = filtered.subList(start, end);
         return new PageImpl<>(pageContent, pageable, filtered.size());

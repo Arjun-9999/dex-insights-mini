@@ -46,6 +46,29 @@ class StoreServiceTest {
     }
 
     @Test
+    void getStores_filtersByHyphenatedBrandAndStatus() {
+        when(jsonRepository.loadStores()).thenReturn(List.of(
+                store("A1", "7-Eleven", "ONLINE", 1),
+                store("A2", "7-Eleven", "DEGRADED", 2),
+                store("A3", "Speedway", "ONLINE", 3)
+        ));
+        storeService = new StoreService(jsonRepository);
+
+        Page<Store> page = storeService.getStores("7-Eleven", "ONLINE", false, PageRequest.of(0, 10));
+
+        assertThat(page.getTotalElements()).isEqualTo(1);
+        assertThat(page.getContent()).extracting(Store::getStoreId).containsExactly("A1");
+    }
+
+    @Test
+    void getStores_returnsEmptyPageWhenOffsetBeyondResults() {
+        Page<Store> page = storeService.getStores("BP", null, false, PageRequest.of(2, 10));
+
+        assertThat(page.getTotalElements()).isEqualTo(1);
+        assertThat(page.getContent()).isEmpty();
+    }
+
+    @Test
     void getStoreById_returnsStoreWhenPresent() {
         Store store = storeService.getStoreById("S3");
 

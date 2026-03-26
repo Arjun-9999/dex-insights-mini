@@ -45,8 +45,8 @@ class StoreControllerTest {
                         .param("page", "0")
                         .param("size", "2"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].STOREID").value("S1"))
-                .andExpect(jsonPath("$.content[0].BRAND").value("Shell"))
+                .andExpect(jsonPath("$.content[0].storeId").value("S1"))
+                .andExpect(jsonPath("$.content[0].brand").value("Shell"))
                 .andExpect(jsonPath("$.content[0].status").value("ONLINE"))
                 .andExpect(jsonPath("$.content[0].offlinePumps").value(5))
                 .andExpect(jsonPath("$.totalElements").value(2));
@@ -60,8 +60,8 @@ class StoreControllerTest {
 
         mockMvc.perform(get("/v1/stores/S3"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.STOREID").value("S3"))
-                .andExpect(jsonPath("$.BRAND").value("BP"))
+                .andExpect(jsonPath("$.storeId").value("S3"))
+                .andExpect(jsonPath("$.brand").value("BP"))
                 .andExpect(jsonPath("$.status").value("OFFLINE"))
                 .andExpect(jsonPath("$.storeAddress.city").value("Houston"));
     }
@@ -76,6 +76,30 @@ class StoreControllerTest {
                 .andExpect(jsonPath("$.error").value("Not Found"))
                 .andExpect(jsonPath("$.message").value("Store not found: MISSING"))
                 .andExpect(jsonPath("$.path").value("/v1/stores/MISSING"));
+    }
+
+    @Test
+    void getStores_returnsBadRequestWhenPageIsNegative() throws Exception {
+        mockMvc.perform(get("/v1/stores")
+                        .param("page", "-1")
+                        .param("size", "10"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.path").value("/v1/stores"));
+    }
+
+    @Test
+    void getStores_returnsBadRequestWhenPageIsNotANumber() throws Exception {
+        mockMvc.perform(get("/v1/stores")
+                        .param("page", "abc")
+                        .param("size", "10"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value("Invalid value for parameter 'page'"))
+                .andExpect(jsonPath("$.path").value("/v1/stores"));
     }
 
     private static Store store(String id, String brand, String status, int offlinePumps, String city, String state) {
